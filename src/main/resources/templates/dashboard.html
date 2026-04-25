@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Ordering System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fa;
+            color: #111827;
+        }
+
+        /* Topbar */
+        .topbar {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            padding: 20px 40px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .topbar-left {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .user-info {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Main container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        /* Welcome section */
+        .welcome-section {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            border-radius: 16px;
+            padding: 40px;
+            color: white;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .welcome-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .welcome-date {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 16px;
+        }
+
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card.green { border-left-color: #10b981; }
+        .stat-card.blue { border-left-color: #3b82f6; }
+        .stat-card.orange { border-left-color: #f59e0b; }
+        .stat-card.purple { border-left-color: #8b5cf6; }
+
+        .stat-label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+
+        .stat-desc {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        /* Charts grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 1024px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .container { padding: 20px; }
+            .topbar { padding: 16px 20px; }
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Tables */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .data-grid { grid-template-columns: 1fr; }
+        }
+
+        .data-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .data-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table thead {
+            background: #f3f4f6;
+        }
+
+        .table th {
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 13px;
+        }
+
+        .table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge.completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge.confirmed {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge.cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        /* Modules Section */
+        .modules-section {
+            margin-bottom: 40px;
+        }
+
+        .modules-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 20px;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .module-btn {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            text-decoration: none;
+            color: inherit;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .module-btn:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .module-icon {
+            font-size: 32px;
+        }
+
+        .module-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-left">📦 Ordering System</div>
+        <div class="topbar-right">
+            <div class="user-info">Welcome, <strong th:text="${username}">User</strong></div>
+            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <div class="welcome-title" th:text="'Welcome back, ' + ${username} + '!'">Welcome back, User!</div>
+            <div class="welcome-subtitle">Here's what's happening with your business today.</div>
+            <div class="welcome-date" th:text="'Today is ' + ${#dates.format(currentDate, 'EEEE, MMMM d, yyyy')}">Today is April 15, 2026</div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card green">
+                <div class="stat-label">Total Sales</div>
+                <div class="stat-value" th:text="'₱' + ${#numbers.formatInteger(totalSales, 0)}">₱0.00</div>
+                <div class="stat-desc" th:if="${pendingCount > 0}" th:text="${pendingCount} + ' pending'">0 pending</div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-label">Total Orders</div>
+                <div class="stat-value" th:text="${totalOrders}">0</div>
+                <div class="stat-desc">All time</div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-label">Total Items</div>
+                <div class="stat-value" th:text="${totalItems}">0</div>
+                <div class="stat-desc">In inventory</div>
+            </div>
+            <div class="stat-card purple" sec:authorize="hasRole('ADMIN')">
+                <div class="stat-label">Total Staff</div>
+                <div class="stat-value" th:text="${activeLabor}">0</div>
+                <div class="stat-desc" th:text="'₱' + ${#numbers.formatInteger(totalPayroll, 0)} + '/mo'">₱0/mo</div>
+            </div>
+            <div class="stat-card purple" sec:authorize="!hasRole('ADMIN')">
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value" th:text="${totalStaff}">0</div>
+                <div class="stat-desc">All users</div>
+            </div>
+        </div>
+
+        <!-- Modules Section -->
+        <div class="modules-section">
+            <div class="modules-title">Modules</div>
+            <div class="modules-grid">
+                <!-- Order Management - Visible to all -->
+                <a href="/orders" class="module-btn">
+                    <div class="module-icon">🛒</div>
+                    <div class="module-name">Order Management</div>
+                </a>
+
+                <!-- Item Management - Admin Only -->
+                <a href="/items" class="module-btn" sec:authorize="hasRole('ADMIN')">
+                    <div class="module-icon">📦</div>
+                    <div class="module-name">Item Management</div>
+                </a>
+
+                <!-- User Management - Admin Only -->
+                <a href="/users" class="module-btn" sec:authorize="hasRole('ADMIN')">
+                    <div class="module-icon">👥</div>
+                    <div class="module-name">User Management</div>
+                </a>
+
+                <!-- Labor Management - Admin Only -->
+                <a href="/labor" class="module-btn" sec:authorize="hasRole('ADMIN')">
+                    <div class="module-icon">👷</div>
+                    <div class="module-name">Labor Management</div>
+                </a>
+
+                <!-- Report - Admin Only -->
+                <a href="/reports" class="module-btn" sec:authorize="hasRole('ADMIN')">
+                    <div class="module-icon">📊</div>
+                    <div class="module-name">Report & Receipt</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title">Sales Overview</div>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Order Status Breakdown</div>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Tables -->
+        <div class="data-grid">
+            <div class="data-card">
+                <div class="data-title">Top Selling Items</div>
+                <table class="table" th:if="${topSellingItems.size() > 0}">
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Quantity Sold</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="item : ${topSellingItems}">
+                            <td th:text="${item.itemOrdered}">Item</td>
+                            <td th:text="${item.quantity}">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="empty-state" th:if="${topSellingItems.size() == 0}">
+                    <div class="empty-state-icon">📦</div>
+                    <div>No items sold yet</div>
+                </div>
+            </div>
+
+            <div class="data-card">
+                <div class="data-title">Recent Orders</div>
+                <table class="table" th:if="${recentOrders.size() > 0}">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Item</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="order : ${recentOrders}">
+                            <td th:text="${order.customerName}">Customer</td>
+                            <td th:text="${order.itemOrdered}">Item</td>
+                            <td>
+                                <span class="badge" 
+                                      th:classappend="${'badge.' + order.status.toLowerCase()}"
+                                      th:text="${order.status}">Status</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="empty-state" th:if="${recentOrders.size() == 0}">
+                    <div class="empty-state-icon">📋</div>
+                    <div>No orders yet</div>
+                </div>
+            </div>
+
+            <!-- Labor Table - Admin Only -->
+            <div class="data-card" sec:authorize="hasRole('ADMIN')">
+                <div class="data-title">Staff Overview</div>
+                <table class="table" th:if="${activeLabor > 0}">
+                    <thead>
+                        <tr>
+                            <th>Active Staff</th>
+                            <th>Inactive Staff</th>
+                            <th>Monthly Payroll</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td th:text="${activeLabor}">0</td>
+                            <td th:text="${inactiveLabor}">0</td>
+                            <td th:text="'₱' + ${#numbers.formatInteger(totalPayroll, 0)}">₱0</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="empty-state" th:if="${activeLabor == 0 and inactiveLabor == 0}">
+                    <div class="empty-state-icon">👷</div>
+                    <div>No staff added yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sales Overview Chart
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: ['Apr 09', 'Apr 10', 'Apr 11', 'Apr 12', 'Apr 13', 'Apr 14', 'Apr 15'],
+                datasets: [{
+                    label: 'Daily Sales (₱)',
+                    data: [65000, 59000, 80000, 81000, 56000, 55000, 40000],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { drawBorder: false }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Order Status Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Pending', 'Cancelled', 'Confirmed'],
+                datasets: [{
+                    data: [
+                        [[${completedCount}]] || 0,
+                        [[${pendingCount}]] || 0,
+                        [[${cancelledCount}]] || 0,
+                        [[${confirmedCount}]] || 0
+                    ],
+                    backgroundColor: [
+                        '#10b981',
+                        '#f59e0b',
+                        '#ef4444',
+                        '#3b82f6'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 16
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

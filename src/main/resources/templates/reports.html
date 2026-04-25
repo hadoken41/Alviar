@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Receipts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 30%, #f1f5f9 60%, #e2e8f0 100%);
+            padding: 0;
+            color: #111827;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 15% 25%, rgba(59, 130, 246, 0.04) 0%, transparent 35%),
+                radial-gradient(circle at 85% 75%, rgba(168, 85, 247, 0.04) 0%, transparent 35%),
+                radial-gradient(circle at 50% 80%, rgba(34, 197, 94, 0.03) 0%, transparent 40%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .bg-shapes::before {
+            content: '';
+            position: absolute;
+            top: 5%;
+            right: -50px;
+            width: 250px;
+            height: 250px;
+            border: 2px solid rgba(59, 130, 246, 0.04);
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            animation: morph 20s ease-in-out infinite;
+        }
+
+        .bg-shapes::after {
+            content: '';
+            position: absolute;
+            bottom: 10%;
+            left: -50px;
+            width: 180px;
+            height: 180px;
+            border: 2px solid rgba(168, 85, 247, 0.03);
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            animation: morph 18s ease-in-out infinite reverse;
+        }
+
+        @keyframes morph {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(15px, -15px) rotate(5deg); }
+            50% { transform: translate(-10px, 10px) rotate(-5deg); }
+            75% { transform: translate(10px, 5px) rotate(3deg); }
+        }
+
+        body::before {
+            content: ''; position: fixed;
+            width: 500px; height: 500px;
+            background: rgba(59, 130, 246, 0.02); border-radius: 50%;
+            top: -150px; left: -150px; pointer-events: none;
+        }
+        body::after {
+            content: ''; position: fixed;
+            width: 400px; height: 400px;
+            background: rgba(59, 130, 246, 0.01); border-radius: 50%;
+            bottom: -120px; right: -120px; pointer-events: none;
+        }
+
+        /* ── Topbar ── */
+        .topbar {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px 28px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(209, 213, 219, 0.5);
+            position: sticky; top: 0; z-index: 50;
+        }
+        .back-btn {
+            color: #6b7280; text-decoration: none;
+            font-size: 0.9rem; font-weight: 600;
+            background: rgba(209, 213, 219, 0.4);
+            border: 1px solid rgba(209, 213, 219, 0.6);
+            padding: 8px 16px; border-radius: 10px; transition: all 0.3s;
+        }
+        .back-btn:hover { background: rgba(209, 213, 219, 0.6); color: #111827; }
+        .page-title    { font-size: 1.75rem; color: #111827; font-weight: 700; }
+        .page-subtitle { font-size: 0.8rem; color: #6b7280; font-weight: 400; }
+
+        /* ── Page wrapper ── */
+        .page { max-width: 1400px; margin: 0 auto; padding: 20px 28px 40px; position: relative; z-index: 1; }
+
+        /* ── Card base ── */
+        .card {
+            background: #ffffff;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(209, 213, 219, 0.6);
+            border-radius: 16px; padding: 28px;
+            margin-bottom: 20px;
+            animation: glow 3s ease-in-out infinite;
+        }
+        .card-title {
+            font-size: 0.9rem; font-weight: 600; color: #111827;
+            margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* ── Stats ── */
+        .stats-row {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 14px; margin-bottom: 20px;
+        }
+        .stat {
+            background: #ffffff;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(209, 213, 219, 0.6);
+            border-radius: 16px; padding: 22px 28px;
+            display: flex; align-items: center; gap: 14px;
+            animation: glow 3s ease-in-out infinite;
+        }
+        .stat-icon { font-size: 1.6rem; }
+        .stat-val   { font-size: 1.4rem; font-weight: 700; color: #111827; line-height: 1; }
+        .stat-label { font-size: 0.7rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; font-weight: 600; }
+        .s-sales  .stat-val { color: #059669; }
+        .s-orders .stat-val { color: #2563eb; }
+        .s-unpaid .stat-val { color: #dc2626; }
+        .s-inv    .stat-val { color: #d97706; }
+
+        /* ── Filters ── */
+        .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+        .date-input {
+            padding: 9px 14px;
+            background: #f3f4f6;
+            border: 1.5px solid rgba(209, 213, 219, 0.8);
+            border-radius: 10px; color: #111827;
+            font-family: 'Inter', sans-serif; font-size: 0.875rem;
+        }
+        .date-input::placeholder { color: rgba(107, 114, 128, 0.6); }
+        .form-select {
+            padding: 9px 14px;
+            background: #f3f4f6;
+            border: 1.5px solid rgba(209, 213, 219, 0.8);
+            border-radius: 10px; color: #111827;
+            font-family: 'Inter', sans-serif; font-size: 0.875rem;
+        }
+        .form-select option { background: #ffffff; color: #111827; }
+        .search-input {
+            flex: 1; padding: 9px 14px;
+            background: #f3f4f6;
+            border: 1.5px solid rgba(209, 213, 219, 0.8);
+            border-radius: 10px; color: #111827;
+            font-family: 'Inter', sans-serif; font-size: 0.875rem;
+        }
+        .search-input::placeholder { color: rgba(107, 114, 128, 0.6); }
+        .btn-search {
+            padding: 9px 20px;
+            background: rgba(243, 244, 246, 0.8);
+            border: 1.5px solid rgba(209, 213, 219, 0.8);
+            border-radius: 10px; color: #374151;
+            font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-search:hover { background: rgba(229, 231, 235, 0.8); color: #111827; }
+        .btn-reset {
+            padding: 9px 16px; background: transparent;
+            border: 1.5px solid rgba(209, 213, 219, 0.8);
+            border-radius: 10px; color: #6b7280;
+            font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            display: inline-flex; align-items: center;
+        }
+        .btn-reset:hover { background: rgba(243, 244, 246, 0.8); color: #111827; }
+
+        /* ── Table ── */
+        .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(209, 213, 219, 0.5); }
+        table.hist { width: 100%; border-collapse: collapse; }
+        table.hist thead tr { background: rgba(243, 244, 246, 0.8); }
+        table.hist th {
+            padding: 12px 14px; text-align: left;
+            font-size: 0.68rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.7px;
+            color: #374151; white-space: nowrap;
+        }
+        table.hist td {
+            padding: 13px 14px; font-size: 0.875rem;
+            color: #4b5563;
+            border-top: 1px solid rgba(209, 213, 219, 0.5);
+        }
+        table.hist tbody tr { transition: background 0.15s; }
+        table.hist tbody tr:hover { background: rgba(243, 244, 246, 0.5); }
+
+        .order-id   { font-family: monospace; font-size: 0.8rem; color: #6b7280; }
+        .cust-name  { font-weight: 600; color: #111827; }
+        .price-hi   { color: #059669; font-weight: 700; }
+        .date-cell  { font-size: 0.78rem; color: #6b7280; }
+
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 600;
+        }
+        .badge::before { content:''; width:5px; height:5px; border-radius:50%; background: currentColor; }
+        .badge-pending   { background: rgba(59, 130, 246, 0.12); color: #2563eb; border: 1px solid rgba(59, 130, 246, 0.2); }
+        .badge-completed { background: rgba(34, 197, 94, 0.12); color: #059669; border: 1px solid rgba(34, 197, 94, 0.2); }
+        .badge-cancelled { background: rgba(220, 38, 38, 0.12); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2); }
+
+        .action-group { display: flex; gap: 6px; }
+        .btn-receipt {
+            padding: 6px 12px; background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 8px; color: #059669;
+            font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            display: inline-flex; align-items: center;
+        }
+        .btn-receipt:hover { background: rgba(34, 197, 94, 0.2); }
+        .btn-paid {
+            padding: 6px 12px; background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 8px; color: #059669;
+            font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-paid:hover { background: rgba(34, 197, 94, 0.2); }
+        .btn-paid:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .empty-state { text-align: center; padding: 40px; color: #6b7280; }
+        .empty-icon  { font-size: 2.5rem; margin-bottom: 10px; }
+
+        /* ── Footer total ── */
+        .report-footer {
+            display: flex; justify-content: flex-end; padding: 16px 0;
+            border-top: 1px solid rgba(209, 213, 219, 0.5);
+            margin-top: 12px; font-size: 0.95rem; font-weight: 600;
+        }
+        .footer-label { color: #6b7280; margin-right: 20px; }
+        .footer-value { color: #059669; font-size: 1.2rem; }
+
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); } 50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(59, 130, 246, 0.3); } }
+
+        @media (max-width: 1024px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .filter-bar { flex-wrap: wrap; }
+        }
+        @media (max-width: 640px) {
+            .stats-row { grid-template-columns: 1fr; }
+            .page { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    <div class="bg-shapes"></div>
+
+<!-- Topbar -->
+<div class="topbar">
+    <a href="/dashboard" class="back-btn">← Back</a>
+    <div>
+        <div class="page-title">📊 Reports & Receipts</div>
+        <div class="page-subtitle">Track sales, orders &amp; receipts</div>
+    </div>
+</div>
+
+<div class="page">
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat s-sales">
+            <div class="stat-icon">💰</div>
+            <div>
+                <div class="stat-val" th:text="'₱' + ${#numbers.formatDecimal(totalSales,1,2)}">₱0.00</div>
+                <div class="stat-label">Total Sales</div>
+            </div>
+        </div>
+        <div class="stat s-orders">
+            <div class="stat-icon">📦</div>
+            <div>
+                <div class="stat-val" th:text="${totalOrders}">0</div>
+                <div class="stat-label">Total Orders</div>
+            </div>
+        </div>
+        <div class="stat s-unpaid">
+            <div class="stat-icon">⚠️</div>
+            <div>
+                <div class="stat-val" th:text="${unpaidOrders}">0</div>
+                <div class="stat-label">Unpaid Orders</div>
+            </div>
+        </div>
+        <div class="stat s-inv">
+            <div class="stat-icon">📈</div>
+            <div>
+                <div class="stat-val" th:text="'₱' + ${#numbers.formatDecimal(inventoryValue,1,2)}">₱0.00</div>
+                <div class="stat-label">Inventory Value</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order History Card with Filters -->
+    <div class="card">
+        <div class="card-title">📋 Order History</div>
+        <form method="get" th:action="@{/reports}">
+            <div class="filter-bar">
+                <input type="date" name="fromDate" class="date-input" th:value="${fromDate}" placeholder="From date">
+                <input type="date" name="toDate" class="date-input" th:value="${toDate}" placeholder="To date">
+                <select name="status" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="Pending"   th:selected="${selectedStatus=='Pending'}">Pending</option>
+                    <option value="Completed" th:selected="${selectedStatus=='Completed'}">Completed</option>
+                    <option value="Cancelled" th:selected="${selectedStatus=='Cancelled'}">Cancelled</option>
+                </select>
+                <input type="text" name="search" class="search-input"
+                       placeholder="Search by customer…" th:value="${selectedSearch}">
+                <button type="submit" class="btn-search">🔍 Filter</button>
+                <a href="/reports" class="btn-reset">✕ Reset</a>
+            </div>
+        </form>
+
+        <div class="table-wrap">
+            <table class="hist" th:if="${orders != null && !orders.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th>#</th><th>Order ID</th><th>Customer</th><th>Item</th>
+                        <th>Qty</th><th>Total</th><th>Status</th>
+                        <th>Date</th><th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="order, iterStat : ${orders}">
+                        <td class="order-id" th:text="${iterStat.count}"></td>
+                        <td class="order-id" th:text="'#' + ${order.id}"></td>
+                        <td class="cust-name" th:text="${order.customerName}"></td>
+                        <td th:text="${order.itemOrdered}"></td>
+                        <td th:text="${order.quantity}"></td>
+                        <td class="price-hi" th:text="'₱' + ${#numbers.formatDecimal(order.totalPrice,1,2)}"></td>
+                        <td>
+                            <span class="badge"
+                                th:classappend="${order.status=='Pending'}   ? 'badge-pending'   :
+                                               (${order.status=='Completed'} ? 'badge-completed' : 'badge-cancelled')"
+                                th:text="${order.status}"></span>
+                        </td>
+                        <td class="date-cell" th:text="${#temporals.format(order.orderDate,'MMM dd, yyyy HH:mm')}"></td>
+                        <td>
+                            <div class="action-group">
+                                <a th:href="@{/reports/receipt/{id}(id=${order.id})}" class="btn-receipt">🧾 Receipt</a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="empty-state" th:if="${orders == null || orders.isEmpty()}">
+                <div class="empty-icon">📭</div>
+                <p>No orders found.</p>
+            </div>
+        </div>
+
+        <div class="report-footer">
+            <span class="footer-label">Filtered Total:</span>
+            <span class="footer-value" th:text="'₱' + ${#numbers.formatDecimal(filteredTotal,1,2)}">₱0.00</span>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
